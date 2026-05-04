@@ -1,0 +1,2332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solfege → Piano</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      body {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .glass {
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+
+      .big-button {
+        touch-action: manipulation;
+      }
+
+      details summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .pulse-dot {
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(0.9);
+          opacity: 0.55;
+        }
+        50% {
+          transform: scale(1.08);
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pulse-dot {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body
+    class="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50"
+  >
+    <main
+      class="mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-4 sm:px-6 sm:py-8"
+    >
+      <header class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-black tracking-tight sm:text-4xl">
+            Solfege → Piano
+          </h1>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            Hear it. Sing it. Find it. Move it.
+          </p>
+        </div>
+
+        <button
+          id="settingsToggle"
+          class="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold shadow-sm dark:border-slate-700 dark:bg-slate-900"
+          type="button"
+          aria-expanded="false"
+        >
+          Settings
+        </button>
+      </header>
+
+      <section
+        id="settingsPanel"
+        class="mb-4 hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Source key</span
+            >
+            <select
+              id="sourceKey"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            ></select>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Transpose key</span
+            >
+            <select
+              id="targetKey"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            ></select>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >World</span
+            >
+            <select
+              id="difficulty"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="tiny">Tiny world: Do Re Mi</option>
+              <option value="chord">Chord home: Do Mi Sol</option>
+              <option value="five">Five-note world: Do Re Mi Fa Sol</option>
+              <option value="six">Almost full: Do Re Mi Fa Sol La</option>
+              <option value="full">Full major: Do Re Mi Fa Sol La Ti Do</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Mode</span
+            >
+            <select
+              id="trainingMode"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="resolve" selected>
+                Single note → reveal resolution
+              </option>
+              <option value="phrase">Phrase → piano</option>
+            </select>
+          </label>
+
+          <label id="phraseLengthWrap" class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Phrase length</span
+            >
+            <select
+              id="phraseLength"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="3">3 notes</option>
+              <option value="4">4 notes</option>
+              <option value="5" selected>5 notes</option>
+              <option value="6">6 notes</option>
+              <option value="7">7 notes</option>
+              <option value="8">8 notes</option>
+            </select>
+          </label>
+
+          <label
+            class="block rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
+          >
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Tempo</span
+            >
+            <div class="flex items-center gap-3">
+              <input
+                id="tempo"
+                type="range"
+                min="40"
+                max="140"
+                step="1"
+                value="70"
+                class="w-full accent-slate-950 dark:accent-white"
+              />
+              <span id="tempoValue" class="w-14 text-right text-sm font-black"
+                >70</span
+              >
+            </div>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Anchor</span
+            >
+            <select
+              id="anchor"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="on" selected>Play Do-Mi-Sol-Do first</option>
+              <option value="doremi">Play Do-Re-Mi-Do first</option>
+              <option value="do">Only play Do first</option>
+              <option value="off">No anchor</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Reveal behavior</span
+            >
+            <select
+              id="revealMode"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="hidden" selected>Hide phrase until Reveal</option>
+              <option value="solfege">Show solfege immediately</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Sound</span
+            >
+            <select
+              id="soundType"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="salamander" selected>Salamander samples</option>
+              <option value="pluck">Plucked string fallback</option>
+              <option value="kalimba">Kalimba / music box</option>
+              <option value="marimba">Soft marimba</option>
+              <option value="flute">Soft flute</option>
+              <option value="reed">Warm reed</option>
+              <option value="plain">Plain sine</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span
+              class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >Octave</span
+            >
+            <select
+              id="octave"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="3">Low</option>
+              <option value="4" selected>Middle</option>
+              <option value="5">High</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section
+        class="glass mb-4 rounded-[2rem] border border-slate-200 bg-white/85 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7"
+      >
+        <div
+          class="mb-4 flex flex-wrap items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"
+        >
+          <span id="statusDot" class="h-3 w-3 rounded-full bg-slate-400"></span>
+          <span id="statusText">Ready</span>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-5">
+          <button
+            id="startBtn"
+            type="button"
+            class="big-button sm:col-span-5 rounded-[1.75rem] bg-slate-950 px-6 py-6 text-2xl font-black text-white shadow-lg shadow-slate-300 active:scale-[0.99] dark:bg-white dark:text-slate-950 dark:shadow-none"
+          >
+            Start
+          </button>
+
+          <button
+            id="replayAnchorBtn"
+            type="button"
+            class="big-button rounded-3xl border border-slate-300 bg-white px-5 py-5 text-lg font-black shadow-sm active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950"
+          >
+            Replay anchor
+          </button>
+
+          <button
+            id="replayNotesBtn"
+            type="button"
+            class="big-button rounded-3xl border border-slate-300 bg-white px-5 py-5 text-lg font-black shadow-sm active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950"
+          >
+            Replay notes
+          </button>
+
+          <button
+            id="playKeyBtn"
+            type="button"
+            class="big-button rounded-3xl border border-slate-300 bg-white px-5 py-5 text-lg font-black shadow-sm active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950"
+          >
+            Play key
+          </button>
+
+          <button
+            id="revealBtn"
+            type="button"
+            class="big-button rounded-3xl border border-slate-300 bg-white px-5 py-5 text-lg font-black shadow-sm active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950"
+          >
+            Reveal
+          </button>
+
+          <button
+            id="newBtn"
+            type="button"
+            class="big-button rounded-3xl border border-slate-300 bg-white px-5 py-5 text-lg font-black shadow-sm active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950"
+          >
+            New
+          </button>
+        </div>
+      </section>
+
+      <section
+        class="mb-4 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      >
+        <div class="mb-4 grid gap-3 sm:grid-cols-2">
+          <div class="rounded-3xl bg-slate-100 p-4 dark:bg-slate-800">
+            <div
+              class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Source
+            </div>
+            <div id="sourceLabel" class="mt-1 text-2xl font-black">C major</div>
+          </div>
+
+          <div class="rounded-3xl bg-slate-100 p-4 dark:bg-slate-800">
+            <div
+              class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Then move it to
+            </div>
+            <div id="targetLabel" class="mt-1 text-2xl font-black">G major</div>
+          </div>
+        </div>
+
+        <div
+          id="blindCard"
+          class="rounded-[1.5rem] border border-dashed border-slate-300 p-5 text-center dark:border-slate-700"
+        >
+          <div
+            class="mx-auto mb-3 h-4 w-4 rounded-full bg-slate-400 pulse-dot"
+          ></div>
+          <p class="text-lg font-black">Listen. Find the single note.</p>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            Replay if needed. Reveal only after you try.
+          </p>
+        </div>
+
+        <div id="answerCard" class="hidden space-y-4">
+          <div>
+            <div
+              class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Solfege
+            </div>
+            <div
+              id="solfegeOutput"
+              class="flex flex-wrap gap-2 text-xl font-black"
+            ></div>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="rounded-3xl bg-slate-100 p-4 dark:bg-slate-800">
+              <div
+                id="sourceNotesTitle"
+                class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
+                In C
+              </div>
+              <div
+                id="sourceNotes"
+                class="mt-2 text-2xl font-black leading-relaxed"
+              ></div>
+            </div>
+
+            <div class="rounded-3xl bg-slate-100 p-4 dark:bg-slate-800">
+              <div
+                id="targetNotesTitle"
+                class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
+                In G
+              </div>
+              <div
+                id="targetNotes"
+                class="mt-2 text-2xl font-black leading-relaxed"
+              ></div>
+            </div>
+          </div>
+
+          <div
+            id="resolutionCard"
+            class="rounded-3xl bg-slate-100 p-4 dark:bg-slate-800"
+          >
+            <div
+              class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Resolution path
+            </div>
+            <div
+              id="resolutionOutput"
+              class="mt-2 text-2xl font-black leading-relaxed"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="mb-4 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      >
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-black">Optional tasks</h2>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Pick one after you find the note. Skip freely.
+            </p>
+          </div>
+
+          <button
+            id="newTaskBtn"
+            type="button"
+            class="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-black shadow-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            New task
+          </button>
+        </div>
+
+        <div class="mb-3 flex flex-wrap gap-2" id="taskFilters"></div>
+
+        <article
+          id="taskCard"
+          class="rounded-[1.5rem] bg-slate-100 p-5 dark:bg-slate-800"
+        >
+          <div
+            id="taskType"
+            class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
+            Task
+          </div>
+          <div id="taskTitle" class="text-xl font-black">
+            Play with the target
+          </div>
+          <div
+            id="taskBody"
+            class="mt-3 text-base leading-7 text-slate-700 dark:text-slate-200"
+          ></div>
+          <div
+            id="taskHint"
+            class="mt-4 hidden rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700 dark:bg-slate-950 dark:text-slate-300"
+          ></div>
+        </article>
+      </section>
+
+      <section
+        class="mb-4 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      >
+        <h2 class="mb-3 text-lg font-black">Practice path</h2>
+
+        <ol class="space-y-3 text-base">
+          <li class="flex gap-3">
+            <span
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white dark:bg-white dark:text-slate-950"
+              >1</span
+            >
+            <span
+              ><strong>Resolve mode:</strong> Start establishes the key and
+              plays one hidden target note.</span
+            >
+          </li>
+          <li class="flex gap-3">
+            <span
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white dark:bg-white dark:text-slate-950"
+              >2</span
+            >
+            <span
+              >Find the note on the piano. Reveal shows the degree and plays the
+              closest path back to Do.</span
+            >
+          </li>
+          <li class="flex gap-3">
+            <span
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white dark:bg-white dark:text-slate-950"
+              >3</span
+            >
+            <span
+              ><strong>Phrase mode:</strong> Start plays a short melody. Reveal
+              shows solfege and source/transpose notes.</span
+            >
+          </li>
+          <li class="flex gap-3">
+            <span
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white dark:bg-white dark:text-slate-950"
+              >4</span
+            >
+            <span>Use Play key when you need to re-hear the tonal map.</span>
+          </li>
+        </ol>
+      </section>
+
+      <details
+        class="mb-4 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      >
+        <summary
+          class="flex cursor-pointer list-none items-center justify-between gap-3"
+        >
+          <span class="text-lg font-black">How to use the app</span>
+          <span
+            class="rounded-full border border-slate-300 px-3 py-1 text-xs font-bold dark:border-slate-700"
+            >Open</span
+          >
+        </summary>
+
+        <div
+          class="mt-4 space-y-5 text-sm leading-6 text-slate-700 dark:text-slate-300"
+        >
+          <section>
+            <h3
+              class="mb-2 text-base font-black text-slate-950 dark:text-slate-50"
+            >
+              Resolve mode
+            </h3>
+            <ol class="ml-5 list-decimal space-y-1">
+              <li>
+                Press <strong>Start</strong>. The app establishes the key and
+                plays one hidden note.
+              </li>
+              <li>Find the note on the piano before revealing it.</li>
+              <li>
+                Press <strong>Reveal</strong>. The app shows the degree and
+                plays the path back to the nearest Do.
+              </li>
+              <li>Play that resolution path yourself.</li>
+            </ol>
+          </section>
+
+          <section>
+            <h3
+              class="mb-2 text-base font-black text-slate-950 dark:text-slate-50"
+            >
+              Phrase mode
+            </h3>
+            <ol class="ml-5 list-decimal space-y-1">
+              <li>
+                Press <strong>Start</strong>. The app plays a short hidden
+                phrase.
+              </li>
+              <li>Sing the contour before touching the piano.</li>
+              <li>Find the phrase in the source key.</li>
+              <li>
+                Press <strong>Reveal</strong>, then play the same solfege in the
+                transpose key.
+              </li>
+            </ol>
+          </section>
+
+          <section>
+            <h3
+              class="mb-2 text-base font-black text-slate-950 dark:text-slate-50"
+            >
+              Rhythm module: ratio tapping
+            </h3>
+            <p>
+              Use a metronome at <strong>60 BPM</strong>. Each click is one
+              second, so <strong>30 clicks = 30 seconds</strong>. This makes the
+              metronome both a timer and a rhythm anchor.
+            </p>
+
+            <div class="mt-3 grid gap-3 sm:grid-cols-3">
+              <div class="rounded-2xl bg-slate-100 p-4 dark:bg-slate-800">
+                <div class="font-black">2:1</div>
+                <p class="mt-1">
+                  One hand taps with the click. The other hand fits one extra
+                  tap between clicks.
+                </p>
+              </div>
+              <div class="rounded-2xl bg-slate-100 p-4 dark:bg-slate-800">
+                <div class="font-black">3:1</div>
+                <p class="mt-1">
+                  One hand taps with the click. The other hand fits three even
+                  taps per click interval.
+                </p>
+              </div>
+              <div class="rounded-2xl bg-slate-100 p-4 dark:bg-slate-800">
+                <div class="font-black">4:1</div>
+                <p class="mt-1">
+                  One hand taps with the click. The other hand fits four even
+                  taps per click interval.
+                </p>
+              </div>
+            </div>
+
+            <p class="mt-3">
+              Do each ratio twice: first with the right hand faster, then with
+              the left hand faster. The click-hand must stay calm and exact.
+            </p>
+
+            <p>
+              The next level is <strong>permutation</strong>: keep the inner
+              grid alive, but remove one or more taps. A 4:1 grid can become
+              <em>tap tap rest tap</em>, <em>rest tap tap tap</em>, or
+              <em>tap rest tap tap</em>. The rhythm is created by taking notes
+              away from a continuous subdivision.
+            </p>
+          </section>
+        </div>
+      </details>
+
+      <details
+        class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      >
+        <summary
+          class="flex cursor-pointer list-none items-center justify-between gap-3"
+        >
+          <span class="text-lg font-black">How this trains the real skill</span>
+          <span
+            class="rounded-full border border-slate-300 px-3 py-1 text-xs font-bold dark:border-slate-700"
+            >Open</span
+          >
+        </summary>
+
+        <div
+          class="mt-4 space-y-4 text-sm leading-6 text-slate-700 dark:text-slate-300"
+        >
+          <p>
+            The app gives you a small sound target. Your piano gives the answer.
+            That keeps the training close to the real skill.
+          </p>
+          <p>
+            Movable Do is used: Do means the home note of the current key. In C,
+            Do is C. In G, Do is G. The same solfege shape becomes different
+            piano keys.
+          </p>
+          <p>
+            Resolve mode establishes the key, plays one target note, and lets
+            you resolve it back to Do. Lower degrees resolve downward; upper
+            degrees resolve upward to high Do.
+          </p>
+          <p>
+            Phrase mode uses the same movable-Do system, but gives you a short
+            melody to find on piano and transpose.
+          </p>
+          <p>
+            Optional tasks are organized as a small task deck in the code. Add
+            more cards to <strong>taskDeck</strong> without changing the
+            playback engine.
+          </p>
+          <p>
+            The generator avoids chaotic note soup. Early phrases mostly move by
+            steps, start near home, and return to stable notes.
+          </p>
+          <p>
+            Sample mode expects Salamander v8 files in
+            <strong>piano-samples/</strong>, next to this HTML file. Use a local
+            server, for example <strong>python -m http.server 8000</strong>, so
+            the browser can load and shape the audio properly.
+          </p>
+        </div>
+      </details>
+    </main>
+
+    <script>
+      const noteNamesSharp = [
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B",
+      ];
+
+      const keys = [
+        { name: "C", midi: 60 },
+        { name: "G", midi: 67 },
+        { name: "D", midi: 62 },
+        { name: "A", midi: 69 },
+        { name: "E", midi: 64 },
+        { name: "B", midi: 71 },
+        { name: "F", midi: 65 },
+        { name: "Bb", midi: 70 },
+        { name: "Eb", midi: 63 },
+        { name: "Ab", midi: 68 },
+        { name: "Db", midi: 61 },
+        { name: "F#", midi: 66 },
+      ];
+
+      const degreeMap = [
+        { solfege: "Do", offset: 0, stable: true },
+        { solfege: "Re", offset: 2, stable: false },
+        { solfege: "Mi", offset: 4, stable: true },
+        { solfege: "Fa", offset: 5, stable: false },
+        { solfege: "Sol", offset: 7, stable: true },
+        { solfege: "La", offset: 9, stable: false },
+        { solfege: "Ti", offset: 11, stable: false },
+        { solfege: "Do↑", offset: 12, stable: true },
+      ];
+
+      const worlds = {
+        tiny: [0, 1, 2],
+        chord: [0, 2, 4],
+        five: [0, 1, 2, 3, 4],
+        six: [0, 1, 2, 3, 4, 5],
+        full: [0, 1, 2, 3, 4, 5, 6, 7],
+      };
+
+      const state = {
+        audio: null,
+        phrase: [],
+        revealed: false,
+        playing: false,
+        sampleInfo: null,
+        sampleBuffers: new Map(),
+        selectedTaskFamily: "mixed",
+        currentTaskId: null,
+      };
+
+      const els = {
+        settingsToggle: document.getElementById("settingsToggle"),
+        settingsPanel: document.getElementById("settingsPanel"),
+        sourceKey: document.getElementById("sourceKey"),
+        targetKey: document.getElementById("targetKey"),
+        difficulty: document.getElementById("difficulty"),
+        trainingMode: document.getElementById("trainingMode"),
+        phraseLength: document.getElementById("phraseLength"),
+        phraseLengthWrap: document.getElementById("phraseLengthWrap"),
+        tempo: document.getElementById("tempo"),
+        tempoValue: document.getElementById("tempoValue"),
+        anchor: document.getElementById("anchor"),
+        revealMode: document.getElementById("revealMode"),
+        soundType: document.getElementById("soundType"),
+        octave: document.getElementById("octave"),
+        startBtn: document.getElementById("startBtn"),
+        replayAnchorBtn: document.getElementById("replayAnchorBtn"),
+        replayNotesBtn: document.getElementById("replayNotesBtn"),
+        playKeyBtn: document.getElementById("playKeyBtn"),
+        revealBtn: document.getElementById("revealBtn"),
+        newBtn: document.getElementById("newBtn"),
+        statusDot: document.getElementById("statusDot"),
+        statusText: document.getElementById("statusText"),
+        sourceLabel: document.getElementById("sourceLabel"),
+        targetLabel: document.getElementById("targetLabel"),
+        blindCard: document.getElementById("blindCard"),
+        answerCard: document.getElementById("answerCard"),
+        solfegeOutput: document.getElementById("solfegeOutput"),
+        sourceNotesTitle: document.getElementById("sourceNotesTitle"),
+        targetNotesTitle: document.getElementById("targetNotesTitle"),
+        sourceNotes: document.getElementById("sourceNotes"),
+        targetNotes: document.getElementById("targetNotes"),
+        resolutionCard: document.getElementById("resolutionCard"),
+        resolutionOutput: document.getElementById("resolutionOutput"),
+        taskFilters: document.getElementById("taskFilters"),
+        newTaskBtn: document.getElementById("newTaskBtn"),
+        taskCard: document.getElementById("taskCard"),
+        taskType: document.getElementById("taskType"),
+        taskTitle: document.getElementById("taskTitle"),
+        taskBody: document.getElementById("taskBody"),
+        taskHint: document.getElementById("taskHint"),
+      };
+
+      const taskFamilies = [
+        { id: "mixed", label: "Mixed" },
+        { id: "intervals", label: "Intervals" },
+        { id: "arpeggios", label: "Arpeggios" },
+        { id: "chords", label: "Chords" },
+        { id: "rhythm", label: "Rhythm" },
+        { id: "improv", label: "Improv" },
+      ];
+
+      const taskDeck = [
+        {
+          id: "interval-name-neighbor",
+          family: "intervals",
+          title: "Name the neighbor interval",
+          build: (ctx) => ({
+            body: `Play ${ctx.targetSolfege}, then play Do. Listen to the distance. Name it if you can, then ignore the name and play the sound again.`,
+            hint: `In ${ctx.sourceKey} major: ${ctx.targetNote} → ${ctx.doNote}. The useful part is not the label. The useful part is feeling how far ${ctx.targetSolfege} is from home.`,
+          }),
+        },
+        {
+          id: "interval-up-down",
+          family: "intervals",
+          title: "Play it above and below Do",
+          build: (ctx) => ({
+            body: `Play Do, then ${ctx.targetSolfege}. Then try the same distance below Do if it exists comfortably on your piano.`,
+            hint: `This connects interval shape to keyboard geography. Keep it slow. Sing before playing.`,
+          }),
+        },
+        {
+          id: "interval-resolve-last",
+          family: "intervals",
+          title: "Hold the target, resolve late",
+          build: (ctx) => ({
+            body: `Play ${ctx.targetSolfege}. Wait. Sing where it wants to go. Only then play the resolution path.`,
+            hint: `${ctx.resolutionSolfege} · ${ctx.resolutionNotes}. The wait is part of the exercise.`,
+          }),
+        },
+        {
+          id: "arpeggio-home",
+          family: "arpeggios",
+          title: "Build the home arpeggio",
+          build: (ctx) => ({
+            body: `Play Do–Mi–Sol–Do↑ in ${ctx.sourceKey}. Then play the target note again and notice whether it feels inside or outside that home sound.`,
+            hint: `Home arpeggio in ${ctx.sourceKey}: ${ctx.homeArpeggio}.`,
+          }),
+        },
+        {
+          id: "arpeggio-target-sandwich",
+          family: "arpeggios",
+          title: "Sandwich the target",
+          build: (ctx) => ({
+            body: `Play Do–Mi–Sol–Do↑, then ${ctx.targetSolfege}, then Do–Mi–Sol–Do↑ again.`,
+            hint: `You are teaching the ear: “this note lives somewhere around this home chord.”`,
+          }),
+        },
+        {
+          id: "arpeggio-transpose",
+          family: "arpeggios",
+          title: "Move the arpeggio",
+          build: (ctx) => ({
+            body: `Play the same home arpeggio in ${ctx.targetKey}. Then play the equivalent target degree in ${ctx.targetKey}.`,
+            hint: `${ctx.targetKey} major target note: ${ctx.transposedTargetNote}.`,
+          }),
+        },
+        {
+          id: "chord-home-target",
+          family: "chords",
+          title: "Hear the note against I",
+          build: (ctx) => ({
+            body: `Play a ${ctx.sourceKey} major chord softly. While it rings, play ${ctx.targetSolfege}. Notice if it blends, rubs, or points somewhere.`,
+            hint: `I chord in ${ctx.sourceKey}: ${ctx.homeChord}. Chord tones usually feel settled. Non-chord tones usually want motion.`,
+          }),
+        },
+        {
+          id: "chord-three-colors",
+          family: "chords",
+          title: "Three chord colors",
+          build: (ctx) => ({
+            body: `Play I, IV, V in ${ctx.sourceKey}. After each chord, play the target note. Which chord makes it feel most at home?`,
+            hint: `I: ${ctx.homeChord}. IV: ${ctx.fourChord}. V: ${ctx.fiveChord}.`,
+          }),
+        },
+        {
+          id: "chord-make-ending",
+          family: "chords",
+          title: "Make a tiny ending",
+          build: (ctx) => ({
+            body: `Use the target note as tension, then end with a simple I chord. Make it sound final.`,
+            hint: `Try: target note → resolution path → ${ctx.homeChord}.`,
+          }),
+        },
+        {
+          id: "rhythm-repeat-3",
+          family: "rhythm",
+          title: "Same notes, three rhythms",
+          build: (ctx) => ({
+            body: `Play the resolution path three times: first evenly, then long–short–short, then short–short–long.`,
+            hint: `${ctx.resolutionSolfege}. The notes stay the same; the character changes.`,
+          }),
+        },
+        {
+          id: "rhythm-call-response",
+          family: "rhythm",
+          title: "Call and response rhythm",
+          build: (ctx) => ({
+            body: `Tap a simple rhythm with one hand. Then play the target note using that rhythm. Resolve on the next strong beat.`,
+            hint: `Keep the rhythm tiny: ta ta taa, or taa ta ta.`,
+          }),
+        },
+        {
+          id: "rhythm-walk-home",
+          family: "rhythm",
+          title: "Walk home with pulse",
+          build: (ctx) => ({
+            body: `Play the resolution path with a steady pulse. Do not speed up when you know the answer.`,
+            hint: `This connects ear resolution to timing control.`,
+          }),
+        },
+        {
+          id: "improv-two-note",
+          family: "improv",
+          title: "Two-note melody",
+          build: (ctx) => ({
+            body: `Make a tiny melody using only Do and ${ctx.targetSolfege}. End on Do.`,
+            hint: `The restriction is the fun. Change rhythm, spacing, and octave.`,
+          }),
+        },
+        {
+          id: "improv-question-answer",
+          family: "improv",
+          title: "Question and answer",
+          build: (ctx) => ({
+            body: `Make a question that ends on ${ctx.targetSolfege}. Then answer it by resolving to Do.`,
+            hint: `Question: unstable ending. Answer: home.`,
+          }),
+        },
+        {
+          id: "improv-transpose-mini",
+          family: "improv",
+          title: "Move your mini-melody",
+          build: (ctx) => ({
+            body: `Invent a 3-note melody around the target in ${ctx.sourceKey}. Move the same solfege shape to ${ctx.targetKey}.`,
+            hint: `Source target: ${ctx.targetNote}. Transposed target: ${ctx.transposedTargetNote}.`,
+          }),
+        },
+        {
+          id: "rhythm-2-1-right-fast",
+          family: "rhythm",
+          title: "2:1 ratio — right hand fast",
+          build: () => ({
+            body: "Set a metronome to 60 BPM. Left hand taps exactly with every click. Right hand adds one tap between clicks. Continue for 30 clicks.",
+            hint: "Count the metronome clicks, not the fast taps. Goal: left hand never drifts from the click.",
+          }),
+        },
+        {
+          id: "rhythm-2-1-left-fast",
+          family: "rhythm",
+          title: "2:1 ratio — left hand fast",
+          build: () => ({
+            body: "Flip the previous exercise. Right hand taps exactly with every click. Left hand adds one tap between clicks. Continue for 30 clicks.",
+            hint: "This should feel like the same exercise mirrored, not a new rhythm.",
+          }),
+        },
+        {
+          id: "rhythm-3-1-right-fast",
+          family: "rhythm",
+          title: "3:1 ratio — right hand fast",
+          build: () => ({
+            body: "Metronome at 60 BPM. Left hand taps with the click. Fit three even right-hand taps into each click interval. Continue for 30 clicks.",
+            hint: "Do not rush the third tap. The next left-hand tap must still land with the click.",
+          }),
+        },
+        {
+          id: "rhythm-3-1-left-fast",
+          family: "rhythm",
+          title: "3:1 ratio — left hand fast",
+          build: () => ({
+            body: "Flip it. Right hand taps with the click. Fit three even left-hand taps into each click interval. Continue for 30 clicks.",
+            hint: "If it collapses, restart with only the click-hand for a few beats, then add the faster hand.",
+          }),
+        },
+        {
+          id: "rhythm-4-1-right-fast",
+          family: "rhythm",
+          title: "4:1 ratio — right hand fast",
+          build: () => ({
+            body: "Metronome at 60 BPM. Left hand taps with the click. Fit four even right-hand taps into each click interval. Continue for 30 clicks.",
+            hint: "Treat this like a tiny coordination workout. Evenness matters more than speed.",
+          }),
+        },
+        {
+          id: "rhythm-4-1-left-fast",
+          family: "rhythm",
+          title: "4:1 ratio — left hand fast",
+          build: () => ({
+            body: "Flip it. Right hand taps with the click. Fit four even left-hand taps into each click interval. Continue for 30 clicks.",
+            hint: "Keep the click-hand calm. The fast hand rides inside it.",
+          }),
+        },
+        {
+          id: "rhythm-missing-note-4-1",
+          family: "rhythm",
+          title: "4:1 with a missing tap",
+          build: () => ({
+            body: "Keep feeling four inner slots per click, but leave one slot silent. Try: tap tap rest tap. Then rest tap tap tap. Then tap rest tap tap.",
+            hint: "The rhythm comes from removing notes from a steady grid, not from inventing a new motion.",
+          }),
+        },
+        {
+          id: "rhythm-continuity-grid",
+          family: "rhythm",
+          title: "Keep the invisible grid",
+          build: () => ({
+            body: "Tap only some of the notes, but keep feeling all the inner subdivisions silently. Use 2:1, then 3:1, then 4:1.",
+            hint: "The hidden subdivision is the real exercise. The audible taps are only the visible part.",
+          }),
+        },
+      ];
+
+      function renderTaskFilters() {
+        if (!els.taskFilters) return;
+
+        els.taskFilters.innerHTML = "";
+
+        taskFamilies.forEach((family) => {
+          const button = document.createElement("button");
+          const active = state.selectedTaskFamily === family.id;
+
+          button.type = "button";
+          button.textContent = family.label;
+          button.className = active
+            ? "rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white dark:bg-white dark:text-slate-950"
+            : "rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-950";
+
+          button.addEventListener("click", () => {
+            state.selectedTaskFamily = family.id;
+            chooseNewTask();
+            renderTaskFilters();
+            renderTask();
+          });
+
+          els.taskFilters.appendChild(button);
+        });
+      }
+
+      function taskContext() {
+        const targetDegree = state.phrase.length ? state.phrase[0] : 0;
+        const sourceKey = els.sourceKey.value;
+        const targetKey = els.targetKey.value;
+        const resolution = resolutionPathForDegree(targetDegree);
+
+        const degreeToNote = (key, degree) =>
+          midiToDisplayName(noteMidiForDegree(key, degree));
+        const degreeListToNotes = (key, degrees) =>
+          degrees.map((degree) => degreeToNote(key, degree)).join(" – ");
+        const degreeListToSolfege = (degrees) =>
+          degrees.map((degree) => degreeMap[degree].solfege).join(" – ");
+
+        return {
+          sourceKey,
+          targetKey,
+          targetDegree,
+          targetSolfege: degreeMap[targetDegree].solfege,
+          targetNote: degreeToNote(sourceKey, targetDegree),
+          transposedTargetNote: degreeToNote(targetKey, targetDegree),
+          doNote: degreeToNote(sourceKey, 0),
+          resolutionSolfege: degreeListToSolfege(resolution),
+          resolutionNotes: degreeListToNotes(sourceKey, resolution),
+          homeChord: degreeListToNotes(sourceKey, [0, 2, 4]),
+          fourChord: degreeListToNotes(sourceKey, [3, 5, 7]),
+          fiveChord: degreeListToNotes(sourceKey, [4, 6, 7]),
+          homeArpeggio: degreeListToNotes(sourceKey, [0, 2, 4, 7]),
+        };
+      }
+
+      function availableTasks() {
+        if (state.selectedTaskFamily === "mixed") {
+          return taskDeck;
+        }
+
+        return taskDeck.filter(
+          (task) => task.family === state.selectedTaskFamily,
+        );
+      }
+
+      function chooseNewTask() {
+        const tasks = availableTasks();
+        if (!tasks.length) return;
+
+        let next = choose(tasks);
+
+        if (tasks.length > 1) {
+          for (let i = 0; i < 6 && next.id === state.currentTaskId; i++) {
+            next = choose(tasks);
+          }
+        }
+
+        state.currentTaskId = next.id;
+      }
+
+      function currentTask() {
+        return (
+          taskDeck.find((task) => task.id === state.currentTaskId) ||
+          taskDeck[0]
+        );
+      }
+
+      function renderTask() {
+        if (!els.taskCard) return;
+
+        if (!state.currentTaskId) {
+          chooseNewTask();
+        }
+
+        const task = currentTask();
+        const ctx = taskContext();
+        const built = task.build(ctx);
+
+        els.taskType.textContent = task.family;
+        els.taskTitle.textContent = task.title;
+        els.taskBody.textContent = built.body;
+        els.taskHint.textContent = built.hint || "";
+        els.taskHint.classList.toggle("hidden", !built.hint);
+      }
+
+      function init() {
+        populateKeys();
+        loadSettings();
+        bindEvents();
+        els.tempoValue.textContent = els.tempo.value;
+        renderTaskFilters();
+        newPhrase(false);
+        chooseNewTask();
+        updateLabels();
+        render();
+      }
+
+      function populateKeys() {
+        keys.forEach((key) => {
+          const sourceOption = document.createElement("option");
+          sourceOption.value = key.name;
+          sourceOption.textContent = `${key.name} major`;
+          els.sourceKey.appendChild(sourceOption);
+
+          const targetOption = document.createElement("option");
+          targetOption.value = key.name;
+          targetOption.textContent = `${key.name} major`;
+          els.targetKey.appendChild(targetOption);
+        });
+
+        els.sourceKey.value = "C";
+        els.targetKey.value = "G";
+      }
+
+      function bindEvents() {
+        els.settingsToggle.addEventListener("click", () => {
+          const hidden = els.settingsPanel.classList.toggle("hidden");
+          els.settingsToggle.setAttribute("aria-expanded", String(!hidden));
+        });
+
+        els.newTaskBtn.addEventListener("click", () => {
+          chooseNewTask();
+          renderTask();
+        });
+
+        els.startBtn.addEventListener("click", async () => {
+          if (!state.phrase.length) newPhrase(false);
+          await playCurrentPhrase();
+        });
+
+        els.replayAnchorBtn.addEventListener("click", async () => {
+          await playCurrentPhrase({ includeAnchor: true, includePhrase: false });
+        });
+
+        els.replayNotesBtn.addEventListener("click", async () => {
+          await playCurrentPhrase({ includeAnchor: false, includePhrase: true });
+        });
+
+        els.playKeyBtn.addEventListener("click", async () => {
+          await playKeyScale();
+        });
+
+        els.revealBtn.addEventListener("click", async () => {
+          state.revealed = true;
+          render();
+          await playRevealPlayback();
+        });
+
+        els.newBtn.addEventListener("click", async () => {
+          newPhrase(true);
+          chooseNewTask();
+          renderTask();
+          await playCurrentPhrase();
+        });
+
+        [
+          els.sourceKey,
+          els.targetKey,
+          els.difficulty,
+          els.trainingMode,
+          els.phraseLength,
+          els.tempo,
+          els.anchor,
+          els.revealMode,
+          els.soundType,
+          els.octave,
+        ].forEach((el) => {
+          el.addEventListener("change", () => {
+            saveSettings();
+            updateLabels();
+
+            if (el.id === "tempo") {
+              els.tempoValue.textContent = el.value;
+            }
+
+            if (
+              ["difficulty", "phraseLength", "trainingMode"].includes(el.id)
+            ) {
+              newPhrase(false);
+            }
+
+            if (el.id === "revealMode" && el.value === "solfege") {
+              state.revealed = true;
+            }
+
+            render();
+          });
+        });
+      }
+
+      function getKey(name) {
+        return keys.find((key) => key.name === name) || keys[0];
+      }
+
+      function getRootMidi(keyName) {
+        const octave = Number(els.octave.value);
+        const key = getKey(keyName);
+        const baseClass = key.midi % 12;
+        return 12 * (octave + 1) + baseClass;
+      }
+
+      function midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      function midiToName(midi) {
+        const name = noteNamesSharp[((midi % 12) + 12) % 12];
+        const octave = Math.floor(midi / 12) - 1;
+        return `${name}${octave}`;
+      }
+
+      function midiToDisplayName(midi) {
+        return noteNamesSharp[((midi % 12) + 12) % 12];
+      }
+
+      function noteMidiForDegree(keyName, degreeIndex) {
+        return getRootMidi(keyName) + degreeMap[degreeIndex].offset;
+      }
+
+      function choose(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function weightedChoose(items) {
+        const total = items.reduce((sum, item) => sum + item.weight, 0);
+        let roll = Math.random() * total;
+
+        for (const item of items) {
+          roll -= item.weight;
+          if (roll <= 0) return item.value;
+        }
+
+        return items[items.length - 1].value;
+      }
+
+      function newPhrase(allowSame = false) {
+        const previous = state.phrase.join(",");
+        let next = [];
+
+        for (let attempt = 0; attempt < 12; attempt++) {
+          next = generateMusicalPhrase();
+          if (allowSame || next.join(",") !== previous) break;
+        }
+
+        state.phrase =
+          els.trainingMode.value === "resolve" ? generateSingleTarget() : next;
+        state.revealed = els.revealMode.value === "solfege";
+        setStatus("Ready", false);
+        render();
+      }
+
+      function generateMusicalPhrase() {
+        const allowed = worlds[els.difficulty.value];
+        const length = Number(els.phraseLength.value);
+
+        let current = chooseStableOrFirst(allowed);
+        const phrase = [current];
+
+        for (let i = 1; i < length - 1; i++) {
+          const candidates = allowed.map((degree) => {
+            const distance = Math.abs(degree - current);
+            let weight = 1;
+
+            if (distance === 0) weight = 0.8;
+            if (distance === 1) weight = 7;
+            if (distance === 2) weight = 3;
+            if (distance === 3) weight = 1.2;
+            if (distance > 3) weight = 0.25;
+
+            if (degree === 0) weight += 1.3;
+            if (degree === 2 || degree === 4) weight += 0.8;
+
+            const previous = phrase[phrase.length - 2];
+            if (previous !== undefined && previous === degree) {
+              weight *= 0.45;
+            }
+
+            return { value: degree, weight };
+          });
+
+          current = weightedChoose(candidates);
+          phrase.push(current);
+        }
+
+        phrase.push(chooseEnding(allowed, phrase[phrase.length - 1]));
+
+        return smoothPhrase(phrase, allowed);
+      }
+
+      function generateSingleTarget() {
+        const allowed = worlds[els.difficulty.value].filter(
+          (degree) => degree !== 0,
+        );
+
+        if (!allowed.length) return [0];
+
+        // Weighted toward unstable/color notes so the resolution feeling is obvious.
+        const weights = allowed.map((degree) => {
+          let weight = 2;
+          if (degree === 3) weight = 5; // Fa wants Mi/Re/Do.
+          if (degree === 6) weight = 5; // Ti wants Do.
+          if (degree === 5) weight = 4; // La wants Ti/Do in the upper path.
+          if (degree === 1) weight = 4; // Re wants Do.
+          if (degree === 4) weight = 3; // Sol is stable but still useful.
+          if (degree === 2) weight = 3; // Mi is stable but characterful.
+          return { value: degree, weight };
+        });
+
+        return [weightedChoose(weights)];
+      }
+
+      function resolutionPathForDegree(degree) {
+        // Benbassat-style idea:
+        // resolve to the closest Do by the natural scale path.
+        // Lower side falls to low Do; upper side rises to high Do.
+        const paths = {
+          0: [0],
+          1: [1, 0], // Re → Do
+          2: [2, 1, 0], // Mi → Re → Do
+          3: [3, 2, 1, 0], // Fa → Mi → Re → Do
+          4: [4, 5, 6, 7], // Sol → La → Ti → Do↑
+          5: [5, 6, 7], // La → Ti → Do↑
+          6: [6, 7], // Ti → Do↑
+          7: [7],
+        };
+
+        return paths[degree] || [degree, 0];
+      }
+
+      function cadenceDegrees() {
+        // Simple tonal anchor: I → IV → V → I, voiced as broken triads.
+        return [
+          [0, 2, 4], // I: Do Mi Sol
+          [3, 5, 7], // IV: Fa La Do↑
+          [4, 6, 7], // V-ish: Sol Ti Do↑
+          [0, 2, 4, 7], // I: Do Mi Sol Do↑
+        ];
+      }
+
+      function chooseStableOrFirst(allowed) {
+        const stable = allowed.filter((degree) => degreeMap[degree].stable);
+        if (!stable.length) return allowed[0];
+
+        return weightedChoose(
+          stable.map((degree) => ({
+            value: degree,
+            weight: degree === 0 ? 5 : 2,
+          })),
+        );
+      }
+
+      function chooseEnding(allowed, current) {
+        const stable = allowed.filter((degree) => degreeMap[degree].stable);
+        const candidates = stable.length ? stable : allowed;
+
+        return weightedChoose(
+          candidates.map((degree) => {
+            const distance = Math.abs(degree - current);
+            let weight = degree === 0 ? 5 : 2;
+
+            if (distance <= 2) weight += 2;
+            if (distance > 3) weight *= 0.4;
+
+            return { value: degree, weight };
+          }),
+        );
+      }
+
+      function smoothPhrase(phrase, allowed) {
+        if (els.difficulty.value === "chord") return phrase;
+
+        return phrase.map((degree, index) => {
+          if (index === 0) return degree;
+
+          const previous = phrase[index - 1];
+          if (Math.abs(degree - previous) <= 3) return degree;
+
+          const stepDirection = degree > previous ? 1 : -1;
+          const stepped = previous + stepDirection;
+
+          return allowed.includes(stepped) ? stepped : degree;
+        });
+      }
+
+      function ensureAudio() {
+        if (!state.audio) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          state.audio = new AudioContext();
+        }
+
+        if (state.audio.state === "suspended") {
+          return state.audio.resume();
+        }
+
+        return Promise.resolve();
+      }
+
+      function makeNoiseBuffer(ctx, seconds = 1) {
+        const sampleRate = ctx.sampleRate;
+        const length = Math.max(1, Math.floor(sampleRate * seconds));
+        const buffer = ctx.createBuffer(1, length, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < length; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        return buffer;
+      }
+
+      function makeKarplusBuffer(ctx, frequency, seconds = 1.25) {
+        const sampleRate = ctx.sampleRate;
+        const length = Math.floor(sampleRate * seconds);
+        const delay = Math.max(2, Math.floor(sampleRate / frequency));
+        const buffer = ctx.createBuffer(1, length, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < delay; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        let damp = 0.495;
+
+        for (let i = delay; i < length; i++) {
+          data[i] = damp * (data[i - delay] + data[i - delay + 1]);
+          damp *= 0.999995;
+        }
+
+        return buffer;
+      }
+
+      function envelope(
+        ctx,
+        destination,
+        startTime,
+        attack,
+        peak,
+        decayTime,
+        sustain,
+        releaseStart,
+        releaseEnd,
+      ) {
+        const gain = ctx.createGain();
+
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(peak, startTime + attack);
+        gain.gain.exponentialRampToValueAtTime(
+          Math.max(0.0001, sustain),
+          startTime + attack + decayTime,
+        );
+        gain.gain.setValueAtTime(Math.max(0.0001, sustain), releaseStart);
+        gain.gain.exponentialRampToValueAtTime(0.0001, releaseEnd);
+
+        gain.connect(destination);
+        return gain;
+      }
+
+      function lowpass(ctx, destination, frequency, q = 0.8) {
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(frequency, ctx.currentTime);
+        filter.Q.setValueAtTime(q, ctx.currentTime);
+        filter.connect(destination);
+        return filter;
+      }
+
+      const salamanderSampleRoot = "piano-samples";
+      const PAUSE_AFTER_ANCHOR = "__pause_after_anchor__";
+      const PAUSE_BEFORE_CONCLUSION = "__pause_before_conclusion__";
+      const salamanderBaseNotes = ["A", "C", "Ds", "Fs"];
+
+      function noteLabelToMidi(label) {
+        const match = label.match(/^([A-G](?:s)?)(-?\d+)$/);
+        if (!match) return null;
+
+        const pitch = match[1];
+        const octave = Number(match[2]);
+
+        const pitchClass = {
+          C: 0,
+          Cs: 1,
+          D: 2,
+          Ds: 3,
+          E: 4,
+          F: 5,
+          Fs: 6,
+          G: 7,
+          Gs: 8,
+          A: 9,
+          As: 10,
+          B: 11,
+        }[pitch];
+
+        if (pitchClass === undefined) return null;
+
+        return (octave + 1) * 12 + pitchClass;
+      }
+
+      function midiToSampleLabel(midi) {
+        const pitchClass = ((midi % 12) + 12) % 12;
+        const octave = Math.floor(midi / 12) - 1;
+        const names = [
+          "C",
+          "Cs",
+          "D",
+          "Ds",
+          "E",
+          "F",
+          "Fs",
+          "G",
+          "Gs",
+          "A",
+          "As",
+          "B",
+        ];
+
+        return `${names[pitchClass]}${octave}`;
+      }
+
+      function buildSalamanderSampleIndex() {
+        const samples = [];
+
+        // Salamander is sampled in minor thirds. Your copied v8 set contains:
+        // A, C, Ds, Fs across octaves.
+        for (let octave = 0; octave <= 8; octave++) {
+          for (const note of salamanderBaseNotes) {
+            const label = `${note}${octave}`;
+            const midi = noteLabelToMidi(label);
+
+            if (midi === null) continue;
+
+            samples.push({
+              label,
+              midi,
+              url: `${salamanderSampleRoot}/${label}v8.wav`,
+            });
+          }
+        }
+
+        return samples;
+      }
+
+      const salamanderSamples = buildSalamanderSampleIndex();
+
+      function nearestSalamanderSample(targetMidi) {
+        let best = null;
+
+        for (const sample of salamanderSamples) {
+          const distance = Math.abs(sample.midi - targetMidi);
+
+          if (!best || distance < best.distance) {
+            best = { ...sample, distance };
+          }
+        }
+
+        return best;
+      }
+
+      async function getSalamanderBuffer(sample) {
+        if (state.sampleBuffers.has(sample.url)) {
+          return state.sampleBuffers.get(sample.url);
+        }
+
+        await ensureAudio();
+
+        const response = await fetch(sample.url);
+
+        if (!response.ok) {
+          throw new Error(`Could not load ${sample.url}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await state.audio.decodeAudioData(arrayBuffer);
+
+        state.sampleBuffers.set(sample.url, audioBuffer);
+
+        return audioBuffer;
+      }
+
+      function anchorDegrees() {
+        if (els.anchor.value === "on") return [0, 2, 4, 7]; // Do-Mi-Sol-Do
+        if (els.anchor.value === "doremi") return [0, 1, 2, 0]; // Do-Re-Mi-Do
+        if (els.anchor.value === "do") return [0];
+        return [];
+      }
+
+      function samplePlaybackTiming() {
+        const beatSeconds = 60 / Number(els.tempo.value);
+
+        // Keep distinct roles: anchor notes move a bit quicker than target notes.
+        const anchorStepSeconds = Math.max(0.11, beatSeconds * 0.72);
+        const phraseStepSeconds = beatSeconds;
+
+        // Stronger overlap for a legato line.
+        const anchorDurationSeconds = Math.max(0.2, anchorStepSeconds * 1.55);
+        const phraseDurationSeconds = Math.max(0.24, phraseStepSeconds * 1.38);
+        const releaseRatio = 0.45;
+
+        const anchorReleaseSeconds = Math.min(
+          0.42,
+          anchorDurationSeconds * releaseRatio,
+        );
+        const phraseReleaseSeconds = Math.min(
+          0.48,
+          phraseDurationSeconds * releaseRatio,
+        );
+
+        const anchorPauseSeconds = 1.0;
+        const conclusionPauseSeconds = 0.5;
+
+        return {
+          beatSeconds,
+          anchorStepSeconds,
+          phraseStepSeconds,
+          anchorDurationSeconds,
+          phraseDurationSeconds,
+          anchorReleaseSeconds,
+          phraseReleaseSeconds,
+          anchorPauseSeconds,
+          conclusionPauseSeconds,
+        };
+      }
+
+      async function prepareSalamanderNotes(midiSequence) {
+        const midiValues = [
+          ...new Set(midiSequence.filter((item) => typeof item === "number")),
+        ];
+        const prepared = new Map();
+
+        await Promise.all(
+          midiValues.map(async (midi) => {
+            const sample = nearestSalamanderSample(midi);
+
+            if (!sample) return;
+
+            try {
+              const audioBuffer = await getSalamanderBuffer(sample);
+              prepared.set(midi, {
+                sample,
+                audioBuffer,
+                semitoneShift: midi - sample.midi,
+              });
+            } catch (error) {
+              console.warn(error);
+            }
+          }),
+        );
+
+        return prepared;
+      }
+
+      function playSalamanderNote(
+        midi,
+        startTime,
+        duration,
+        releaseTime,
+        prepared,
+      ) {
+        const preparedNote = prepared.get(midi);
+
+        if (!preparedNote) {
+          throw new Error(
+            `No Salamander sample ready for ${midiToSampleLabel(midi)}.`,
+          );
+        }
+
+        const { sample, audioBuffer, semitoneShift } = preparedNote;
+        const ctx = state.audio;
+        const playbackRate = Math.pow(2, semitoneShift / 12);
+        const peakVolume = 0.72;
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.playbackRate.setValueAtTime(playbackRate, startTime);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(peakVolume, startTime + 0.008);
+
+        const releaseStart = startTime + Math.max(0.04, duration - releaseTime);
+        gain.gain.setValueAtTime(peakVolume, releaseStart);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        source.connect(gain).connect(ctx.destination);
+        source.start(startTime);
+        source.stop(startTime + duration + 0.04);
+
+        state.sampleInfo = {
+          needed: midiToSampleLabel(midi),
+          used: sample.label,
+          shift: semitoneShift,
+        };
+      }
+
+      async function playMidiSequenceWithSamples(
+        midiSequence,
+        statusText = "Playing",
+      ) {
+        if (state.playing) return;
+
+        await ensureAudio();
+
+        state.playing = true;
+        setStatus("Loading samples", true);
+
+        const timing = samplePlaybackTiming();
+        const prepared = await prepareSalamanderNotes(midiSequence);
+        const ctx = state.audio;
+        let time = ctx.currentTime + 0.08;
+        let endTime = time;
+        let inPhraseSection = false;
+
+        setStatus(statusText, true);
+
+        midiSequence.forEach((item) => {
+          if (item === PAUSE_AFTER_ANCHOR) {
+            inPhraseSection = true;
+            time += timing.anchorPauseSeconds;
+            return;
+          }
+          if (item === PAUSE_BEFORE_CONCLUSION) {
+            inPhraseSection = true;
+            time += timing.conclusionPauseSeconds;
+            return;
+          }
+
+          const stepSeconds = inPhraseSection
+            ? timing.phraseStepSeconds
+            : timing.anchorStepSeconds;
+          const durationSeconds = inPhraseSection
+            ? timing.phraseDurationSeconds
+            : timing.anchorDurationSeconds;
+          const releaseSeconds = inPhraseSection
+            ? timing.phraseReleaseSeconds
+            : timing.anchorReleaseSeconds;
+
+          try {
+            playSalamanderNote(
+              item,
+              time,
+              durationSeconds,
+              releaseSeconds,
+              prepared,
+            );
+          } catch (error) {
+            console.warn(error);
+            setStatus("Sample missing — using fallback", false);
+            playNote(item, time, durationSeconds);
+          }
+
+          endTime = Math.max(endTime, time + durationSeconds);
+          time += stepSeconds;
+        });
+
+        window.setTimeout(
+          () => {
+            state.playing = false;
+            setStatus("Your turn", false);
+          },
+          Math.ceil((endTime - ctx.currentTime + 0.08) * 1000),
+        );
+      }
+
+      async function playMidiSequenceWithSynth(
+        midiSequence,
+        statusText = "Playing",
+      ) {
+        if (state.playing) return;
+
+        await ensureAudio();
+
+        state.playing = true;
+        setStatus(statusText, true);
+
+        const timing = samplePlaybackTiming();
+        const ctx = state.audio;
+        let time = ctx.currentTime + 0.08;
+        let endTime = time;
+        let inPhraseSection = false;
+
+        midiSequence.forEach((item) => {
+          if (item === PAUSE_AFTER_ANCHOR) {
+            inPhraseSection = true;
+            time += timing.anchorPauseSeconds;
+            return;
+          }
+          if (item === PAUSE_BEFORE_CONCLUSION) {
+            inPhraseSection = true;
+            time += timing.conclusionPauseSeconds;
+            return;
+          }
+
+          const stepSeconds = inPhraseSection
+            ? timing.phraseStepSeconds
+            : timing.anchorStepSeconds;
+          const durationSeconds = inPhraseSection
+            ? timing.phraseDurationSeconds
+            : timing.anchorDurationSeconds;
+
+          playNote(item, time, durationSeconds);
+          endTime = Math.max(endTime, time + durationSeconds);
+          time += stepSeconds;
+        });
+
+        window.setTimeout(
+          () => {
+            state.playing = false;
+            setStatus("Your turn", false);
+          },
+          Math.ceil((endTime - ctx.currentTime + 0.08) * 1000),
+        );
+      }
+
+      async function playKeyScale() {
+        if (state.playing) return;
+
+        const source = els.sourceKey.value;
+        const sequence = [0, 1, 2, 3, 4, 5, 6, 7].map((degree) =>
+          noteMidiForDegree(source, degree),
+        );
+
+        if (els.soundType.value === "salamander") {
+          await playMidiSequenceWithSamples(sequence, "Playing key");
+          return;
+        }
+
+        await playMidiSequenceWithSynth(sequence, "Playing key");
+      }
+
+      function buildCurrentPhraseMidiSequence({
+        includeAnchor = true,
+        includePhrase = true,
+      } = {}) {
+        if (!state.phrase.length) return [];
+
+        const source = els.sourceKey.value;
+        const midiSequence = [];
+
+        if (includeAnchor) {
+          const anchor = anchorDegrees();
+          anchor.forEach((degree) => {
+            midiSequence.push(noteMidiForDegree(source, degree));
+          });
+
+          if (anchor.length && includePhrase) {
+            midiSequence.push(PAUSE_AFTER_ANCHOR);
+          }
+        }
+
+        if (includePhrase) {
+          if (els.trainingMode.value === "resolve") {
+            midiSequence.push(noteMidiForDegree(source, state.phrase[0]));
+          } else {
+            state.phrase.forEach((degree) => {
+              midiSequence.push(noteMidiForDegree(source, degree));
+            });
+          }
+        }
+
+        return midiSequence;
+      }
+
+      function currentExerciseDegrees() {
+        if (!state.phrase.length) return [];
+
+        return els.trainingMode.value === "resolve"
+          ? [state.phrase[0]]
+          : [...state.phrase];
+      }
+
+      function highestExerciseDegree() {
+        const degrees = currentExerciseDegrees();
+        return degrees.length ? Math.max(...degrees) : 0;
+      }
+
+      function buildRevealMidiSequence() {
+        if (!state.phrase.length) return [];
+
+        const source = els.sourceKey.value;
+        const exercise = currentExerciseDegrees().map((degree) =>
+          noteMidiForDegree(source, degree),
+        );
+        const resolution = resolutionPathForDegree(highestExerciseDegree()).map(
+          (degree) => noteMidiForDegree(source, degree),
+        );
+
+        return [...exercise, PAUSE_BEFORE_CONCLUSION, ...resolution];
+      }
+
+      function currentPhraseStatusText({ includeAnchor, includePhrase }) {
+        if (includeAnchor && includePhrase) return "Playing";
+        if (includeAnchor) return "Playing anchor";
+        return "Playing notes";
+      }
+
+      async function playRevealPlayback() {
+        if (state.playing || !state.phrase.length) return;
+
+        const sequence = buildRevealMidiSequence();
+        if (!sequence.length) return;
+
+        if (els.soundType.value === "salamander") {
+          await playMidiSequenceWithSamples(sequence, "Replaying and resolving");
+          return;
+        }
+
+        await playMidiSequenceWithSynth(sequence, "Replaying and resolving");
+      }
+
+      async function playCurrentPhraseWithSamples(options = {}) {
+        if (state.playing || !state.phrase.length) return;
+
+        const midiSequence = buildCurrentPhraseMidiSequence(options);
+        if (!midiSequence.length) {
+          setStatus("Nothing to replay", false);
+          return;
+        }
+
+        await playMidiSequenceWithSamples(
+          midiSequence,
+          `${currentPhraseStatusText({
+            includeAnchor: options.includeAnchor !== false,
+            includePhrase: options.includePhrase !== false,
+          })} Salamander samples`,
+        );
+      }
+
+      function playNote(midi, startTime, duration = 0.45) {
+        const ctx = state.audio;
+        const sound = els.soundType.value;
+        const freq = midiToFreq(midi);
+
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0.85, startTime);
+        master.connect(ctx.destination);
+
+        if (sound === "pluck") {
+          const source = ctx.createBufferSource();
+          source.buffer = makeKarplusBuffer(ctx, freq, duration + 1.2);
+
+          const body = ctx.createBiquadFilter();
+          body.type = "lowpass";
+          body.frequency.setValueAtTime(Math.min(5200, freq * 9), startTime);
+          body.frequency.exponentialRampToValueAtTime(
+            Math.max(900, freq * 3.2),
+            startTime + duration + 0.45,
+          );
+          body.Q.setValueAtTime(0.65, startTime);
+
+          const gain = envelope(
+            ctx,
+            master,
+            startTime,
+            0.006,
+            0.42,
+            0.22,
+            0.1,
+            startTime + duration * 0.75,
+            startTime + duration + 0.75,
+          );
+
+          source.connect(body).connect(gain);
+          source.start(startTime);
+          source.stop(startTime + duration + 1.1);
+          return;
+        }
+
+        if (sound === "kalimba") {
+          const out = envelope(
+            ctx,
+            master,
+            startTime,
+            0.004,
+            0.32,
+            0.18,
+            0.045,
+            startTime + duration * 0.65,
+            startTime + duration + 0.65,
+          );
+
+          const partials = [
+            { ratio: 1, level: 0.85 },
+            { ratio: 2.03, level: 0.24 },
+            { ratio: 3.02, level: 0.1 },
+            { ratio: 5.01, level: 0.035 },
+          ];
+
+          partials.forEach((partial) => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq * partial.ratio, startTime);
+            g.gain.setValueAtTime(partial.level, startTime);
+            osc.connect(g).connect(out);
+            osc.start(startTime);
+            osc.stop(startTime + duration + 0.75);
+          });
+
+          return;
+        }
+
+        if (sound === "marimba") {
+          const out = envelope(
+            ctx,
+            master,
+            startTime,
+            0.003,
+            0.34,
+            0.28,
+            0.035,
+            startTime + duration * 0.7,
+            startTime + duration + 0.45,
+          );
+
+          const carrier = ctx.createOscillator();
+          const mod = ctx.createOscillator();
+          const modGain = ctx.createGain();
+          const warmth = ctx.createBiquadFilter();
+
+          carrier.type = "sine";
+          mod.type = "sine";
+          carrier.frequency.setValueAtTime(freq, startTime);
+          mod.frequency.setValueAtTime(freq * 3.98, startTime);
+          modGain.gain.setValueAtTime(freq * 0.9, startTime);
+          modGain.gain.exponentialRampToValueAtTime(
+            freq * 0.03,
+            startTime + duration * 0.8,
+          );
+
+          warmth.type = "lowpass";
+          warmth.frequency.setValueAtTime(Math.min(3600, freq * 7), startTime);
+          warmth.Q.setValueAtTime(0.6, startTime);
+
+          mod.connect(modGain).connect(carrier.frequency);
+          carrier.connect(warmth).connect(out);
+
+          carrier.start(startTime);
+          mod.start(startTime);
+          carrier.stop(startTime + duration + 0.5);
+          mod.stop(startTime + duration + 0.5);
+          return;
+        }
+
+        if (sound === "flute") {
+          const out = envelope(
+            ctx,
+            master,
+            startTime,
+            0.08,
+            0.22,
+            0.18,
+            0.16,
+            startTime + duration * 0.9,
+            startTime + duration + 0.3,
+          );
+
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const lfo = ctx.createOscillator();
+          const lfoGain = ctx.createGain();
+          const breath = ctx.createBufferSource();
+          const breathFilter = ctx.createBiquadFilter();
+          const breathGain = ctx.createGain();
+
+          osc1.type = "sine";
+          osc2.type = "triangle";
+          osc1.frequency.setValueAtTime(freq, startTime);
+          osc2.frequency.setValueAtTime(freq * 2, startTime);
+
+          lfo.type = "sine";
+          lfo.frequency.setValueAtTime(5.2, startTime);
+          lfoGain.gain.setValueAtTime(freq * 0.006, startTime);
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc1.frequency);
+          lfoGain.connect(osc2.frequency);
+
+          const g2 = ctx.createGain();
+          g2.gain.setValueAtTime(0.05, startTime);
+
+          breath.buffer = makeNoiseBuffer(ctx, duration + 0.5);
+          breathFilter.type = "bandpass";
+          breathFilter.frequency.setValueAtTime(
+            Math.min(4200, freq * 7),
+            startTime,
+          );
+          breathFilter.Q.setValueAtTime(1.1, startTime);
+          breathGain.gain.setValueAtTime(0.012, startTime);
+
+          osc1.connect(out);
+          osc2.connect(g2).connect(out);
+          breath.connect(breathFilter).connect(breathGain).connect(out);
+
+          osc1.start(startTime);
+          osc2.start(startTime);
+          lfo.start(startTime);
+          breath.start(startTime);
+
+          [osc1, osc2, lfo].forEach((osc) =>
+            osc.stop(startTime + duration + 0.35),
+          );
+          breath.stop(startTime + duration + 0.4);
+          return;
+        }
+
+        if (sound === "reed") {
+          const out = envelope(
+            ctx,
+            master,
+            startTime,
+            0.035,
+            0.25,
+            0.12,
+            0.18,
+            startTime + duration * 0.9,
+            startTime + duration + 0.25,
+          );
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(
+            Math.min(2600, freq * 5.5),
+            startTime,
+          );
+          filter.Q.setValueAtTime(1.2, startTime);
+
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const osc3 = ctx.createOscillator();
+
+          osc1.type = "sawtooth";
+          osc2.type = "triangle";
+          osc3.type = "sine";
+
+          osc1.frequency.setValueAtTime(freq, startTime);
+          osc2.frequency.setValueAtTime(freq * 0.997, startTime);
+          osc3.frequency.setValueAtTime(freq * 2.002, startTime);
+
+          const g1 = ctx.createGain();
+          const g2 = ctx.createGain();
+          const g3 = ctx.createGain();
+
+          g1.gain.setValueAtTime(0.18, startTime);
+          g2.gain.setValueAtTime(0.12, startTime);
+          g3.gain.setValueAtTime(0.035, startTime);
+
+          osc1.connect(g1).connect(filter);
+          osc2.connect(g2).connect(filter);
+          osc3.connect(g3).connect(filter);
+          filter.connect(out);
+
+          [osc1, osc2, osc3].forEach((osc) => {
+            osc.start(startTime);
+            osc.stop(startTime + duration + 0.3);
+          });
+
+          return;
+        }
+
+        const out = envelope(
+          ctx,
+          master,
+          startTime,
+          0.02,
+          0.2,
+          0.1,
+          0.12,
+          startTime + duration,
+          startTime + duration + 0.2,
+        );
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, startTime);
+        osc.connect(out);
+        osc.start(startTime);
+        osc.stop(startTime + duration + 0.25);
+      }
+
+      async function playCurrentPhrase(options = {}) {
+        const includeAnchor = options.includeAnchor !== false;
+        const includePhrase = options.includePhrase !== false;
+
+        if (els.soundType.value === "salamander") {
+          await playCurrentPhraseWithSamples({ includeAnchor, includePhrase });
+          return;
+        }
+
+        if (state.playing || !state.phrase.length) return;
+
+        const midiSequence = buildCurrentPhraseMidiSequence({
+          includeAnchor,
+          includePhrase,
+        });
+        if (!midiSequence.length) {
+          setStatus("Nothing to replay", false);
+          return;
+        }
+
+        await playMidiSequenceWithSynth(
+          midiSequence,
+          currentPhraseStatusText({ includeAnchor, includePhrase }),
+        );
+      }
+
+      function setStatus(text, active) {
+        els.statusText.textContent = text;
+        els.statusDot.className = active
+          ? "h-3 w-3 rounded-full bg-emerald-500 pulse-dot"
+          : text === "Your turn"
+            ? "h-3 w-3 rounded-full bg-amber-500"
+            : "h-3 w-3 rounded-full bg-slate-400";
+      }
+
+      function updateLabels() {
+        els.sourceLabel.textContent = `${els.sourceKey.value} major`;
+        els.targetLabel.textContent = `${els.targetKey.value} major`;
+        els.sourceNotesTitle.textContent = `In ${els.sourceKey.value}`;
+        els.targetNotesTitle.textContent = `In ${els.targetKey.value}`;
+      }
+
+      function render() {
+        updateLabels();
+
+        els.phraseLengthWrap.classList.toggle(
+          "hidden",
+          els.trainingMode.value === "resolve",
+        );
+
+        const showAnswer = state.revealed || els.revealMode.value === "solfege";
+
+        const blindTitle =
+          els.trainingMode.value === "resolve"
+            ? "Listen. Find the single note."
+            : "Listen. Find the phrase.";
+        const blindSubtitle =
+          els.trainingMode.value === "resolve"
+            ? "Replay if needed. Reveal only after you try."
+            : "Sing the shape, find it on piano, then transpose it.";
+
+        const blindTitleEl = els.blindCard.querySelector("p.text-lg");
+        const blindSubtitleEl = els.blindCard.querySelector("p.text-sm");
+
+        if (blindTitleEl) blindTitleEl.textContent = blindTitle;
+        if (blindSubtitleEl) blindSubtitleEl.textContent = blindSubtitle;
+
+        els.blindCard.classList.toggle("hidden", showAnswer);
+        els.answerCard.classList.toggle("hidden", !showAnswer);
+
+        els.solfegeOutput.innerHTML = "";
+        state.phrase.forEach((degree, index) => {
+          const pill = document.createElement("span");
+          pill.className =
+            "rounded-2xl bg-slate-950 px-3 py-2 text-white dark:bg-white dark:text-slate-950";
+          pill.textContent = degreeMap[degree].solfege;
+          els.solfegeOutput.appendChild(pill);
+
+          if (index < state.phrase.length - 1) {
+            const arrow = document.createElement("span");
+            arrow.className = "self-center text-slate-400";
+            arrow.textContent = "→";
+            els.solfegeOutput.appendChild(arrow);
+          }
+        });
+
+        els.sourceNotes.textContent = notesForKey(els.sourceKey.value).join(
+          " – ",
+        );
+        els.targetNotes.textContent = notesForKey(els.targetKey.value).join(
+          " – ",
+        );
+
+        const showResolution = showAnswer && state.phrase.length;
+        els.resolutionCard.classList.toggle("hidden", !showResolution);
+
+        if (showResolution) {
+          const path = resolutionPathForDegree(highestExerciseDegree());
+          const solfegePath = path
+            .map((degree) => degreeMap[degree].solfege)
+            .join(" – ");
+          const notePath = path
+            .map((degree) =>
+              midiToDisplayName(noteMidiForDegree(els.sourceKey.value, degree)),
+            )
+            .join(" – ");
+          els.resolutionOutput.textContent = `${solfegePath}  ·  ${notePath}`;
+        }
+
+        renderTask();
+      }
+
+      function notesForKey(keyName) {
+        return state.phrase.map((degree) => {
+          const midi = noteMidiForDegree(keyName, degree);
+          return midiToDisplayName(midi);
+        });
+      }
+
+      function saveSettings() {
+        const data = {
+          sourceKey: els.sourceKey.value,
+          targetKey: els.targetKey.value,
+          difficulty: els.difficulty.value,
+          trainingMode: els.trainingMode.value,
+          phraseLength: els.phraseLength.value,
+          tempo: els.tempo.value,
+          anchor: els.anchor.value,
+          revealMode: els.revealMode.value,
+          soundType: els.soundType.value,
+          octave: els.octave.value,
+        };
+
+        localStorage.setItem("solfegePianoSettings", JSON.stringify(data));
+      }
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem("solfegePianoSettings");
+          if (!raw) return;
+
+          const data = JSON.parse(raw);
+
+          Object.entries(data).forEach(([key, value]) => {
+            if (els[key] && value !== undefined) {
+              els[key].value = value;
+            }
+          });
+        } catch {
+          // Ignore broken localStorage data.
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
